@@ -1,0 +1,21 @@
+﻿<table width='100%'>
+<thead>
+<tr>
+<th>ID</th><th>Nickname</th><th>Age</th><th>Action</th>
+</tr>
+</thead>
+<tbody>
+<% _.each(models, function(model) { %>
+<tr>
+<td><%= model.id %></td>
+<td><%= model.nickname %></td>
+<td><%= model.age %></td>
+<td>
+<a href='#' class='readView button small' data-id="<%= model.id %>"><i class="foundicon-page"></i></a>
+<a href='#' class='updateView button small' data-id="<%= model.id %>"><i class="foundicon-tools"></i></a>
+<a href='#' class='deleteSubmit button small' data-id="<%= model.id %>"><i class="foundicon-remove"></i></a>
+</td>
+</tr>
+<% }); %>
+</tbody>
+</table>

@@ -5,6 +5,7 @@
 	<meta name="viewport" content="width=device-width" /> 
 	<link rel="stylesheet" href="css/foundation.css" />
 	<link rel="stylesheet" href="css/general_foundicons.css">
+	<style>h3{font-family: 微軟正黑體;}</style>
 	<!--[if lt IE 8]>
 		<link rel="stylesheet" href="css/general_foundicons_ie7.css">
   	<![endif]-->
@@ -13,12 +14,7 @@
 <div id='wrapper'>
 	<div class='row'>
 		<div class='large-12 columns'>
-			<h1>CRUD</h1>
-			<ul class="button-group">
-				<li><a href="#" class="mainView small button secondary"><i class="foundicon-star"></i> Main</a></li>
-				<li><a href="#" class="createView small button secondary"><i class="foundicon-plus"></i> Create</a></li>
-        		<li><a href="#" class="save small button secondary"><i class="foundicon-inbox"></i> Save</a></li>
-			</ul>
+			<h1>Tong-Kwang Light House Presbyterian Church Backoffice</h1>
 			<hr />
 		</div>
 	</div>
@@ -26,11 +22,11 @@
 		<div class='large-2 columns'>
 			<div class="docs section-container accordion" data-section="accordion" data-options="one_up: false">
 				<section class="section active">
-					<p class="title"><a href="#">Menu A</a></p>
+					<p class="title"><a href="#">內部設定</a></p>
 					<div class="content">
 						<ul class="side-nav">
-							<li><a class="active" href="#">Sub 1</a></li>
-							<li><a class="" href="#">Sub 2</a></li>
+							<li><a class="active boss_mainView" href="#">管理員資料</a></li>
+							<li><a class="item_mainView" href="#">頁面管理</a></li>
 						</ul>
 					</div>
 				</section>
@@ -88,16 +84,18 @@
 			}
 		});
 		return objectData;
-	};	
-	var Student={};
-	Student.View={};
-	Student.Model=Backbone.Model.extend({
-		initialize: function(collection, query){
+	};
+	// Boss //
+	var Boss={};
+	Boss.View={};
+	Boss.Model=Backbone.Model.extend({
+		initialize: function(){
 			console.log('Model Initialize');
 		},
 		defaults: {
-			'id': 'underfind',
-			'nickname': 'underfind'
+			'boss_id': 'underfind',
+			'boss_name': 'underfind',
+			'boss_password': 'underfind'
 		},
 		urlRoot: 'mysql.php',
 		url: function(){
@@ -106,45 +104,48 @@
 			return base+'?'+query;
 		}
 	});
-	Student.Collection=Backbone.Collection.extend({
+	Boss.Collection=Backbone.Collection.extend({
 		initialize: function(){
 			console.log('Collection Initialize');
 		},
-		model: Student.Model,
+		model: Boss.Model,
 		comparator: function(model){
 			return model.get();
 		}
 	});
-	Student.View.Read=Backbone.View.extend({
+	Boss.View.Read=Backbone.View.extend({
 		el: $('#wrapper'),
 		container: $('#container'),
-		template: 'main.html',
-		templateRead: 'read.html',
-		templateUpdate: 'update.html',
-		templateCreate: 'create.html',
-		query: {'act': 'read'},
+		template: 'template/boss_main.html',
+		templateRead: 'template/boss_read.html',
+		templateUpdate: 'template/boss_update.html',
+		templateCreate: 'template/boss_create.html',
+		query: {
+			'zone': 'boss',
+			'act': 'read'
+		},
 		page: {
 			el: $('#page-wrapper'),			
 			container: $('#page-container'),
-			template: 'page.html',
-			max: 5,
+			template: 'template/boss_page.html',
+			max: 10,
 			current: 1
 		},
 		history: [],
 		events: {
-			"click .save": "save",
-			"click .mainView": "render",
+			"click .boss_save": "save",
+			"click .boss_mainView": "render",
 			// Page //
-			"click .pageView": "render",
+			"click .boss_pageView": "render",
 			// Read //
-			"click .readView": "readView",
+			"click .boss_readView": "readView",
 			// Create //
-			"click .createView": "createView",
-			"click .createSubmit": "createSubmit",
+			"click .boss_createView": "createView",
+			"click .boss_createSubmit": "createSubmit",
 			// Update //
-			"click .updateView": "updateView",
-			"click .updateSubmit": "updateSubmit",
-			"click .deleteSubmit": "deleteSubmit"
+			"click .boss_updateView": "updateView",
+			"click .boss_updateSubmit": "updateSubmit",
+			"click .boss_deleteSubmit": "deleteSubmit"
 		},
 		initialize: function(collection, query){
 			console.log('View- Initialize');
@@ -170,12 +171,8 @@
 				console.dir(models);
 				that.container.html(_.template(html, {models: models}));
 			});
-
-
-
 			// Page //
 			var pageCounter=Math.ceil(((this.collection).models.length)/this.page.max);
-			console.log(pageCounter);
 			this.page.container.load(this.page.template, function(html){
 				that.page.container.html('');
 				for(var i=1; i <= pageCounter; i++){
@@ -194,7 +191,7 @@
 		createSubmit: function(evt){
 			console.log('View- Create- Submit');
 			evt.preventDefault();
-			var model=this.model, query={'act': 'create'}, data=this.$el.find('form').serializeObject();
+			var model=this.model, query={'zone': 'boss', 'act': 'create'}, data=this.$el.find('form').serializeObject();
 			// Request Client //
 			this.collection.add(data);
 			// Save History //
@@ -207,10 +204,10 @@
 			console.log('View- Read');
 			this.page.el.css('display','none');
 			evt.preventDefault();
-			var that=this, id=evt.currentTarget.getAttribute('data-id'), model=that.collection.get(id);
+			var that=this, id=evt.currentTarget.getAttribute('data-id'), model=this.collection.where({boss_id: id});
 			this.container.load(this.templateRead, function(html){
 				that.container.html('');
-				that.container.html(_.template(html, model.toJSON())+that.container.html());
+				that.container.html(_.template(html, model[0].toJSON())+that.container.html());
 			});
 			return false;
 		},
@@ -218,65 +215,63 @@
 			console.log('View- Update');
 			this.page.el.css('display','none');
 			evt.preventDefault();
-			var that=this, id=evt.currentTarget.getAttribute('data-id'), model=that.collection.get(id);
+			var that=this, id=evt.currentTarget.getAttribute('data-id'), model=this.collection.where({boss_id: id});
 			this.container.load(this.templateUpdate, function(html){
 				that.container.html('');
-				that.container.html(_.template(html, model.toJSON())+that.container.html());
+				that.container.html(_.template(html, model[0].toJSON())+that.container.html());
 			});
 			return false;
 		},
 		updateSubmit: function(evt){
 			console.log('View- Update- Submit');
 			evt.preventDefault();
-			var query={'act':'update'}, data=this.$el.find('form').serializeObject(), model=this.collection.get(data.id);
+			var query={'zone': 'boss', 'act':'update'}, data=this.$el.find('form').serializeObject(), model=this.collection.where({boss_id: data.boss_id});
 			console.log(model);
-			// Request Client //			
-			model.set(data);
+			// Request Client //
+			model[0].set(data);
 			// Save History //			
-			this.history.push({'model':model, 'query':query, 'data':data});	
+			this.history.push({'model':model[0], 'query':query, 'data':data});	
+			// Request Server //			
+			//this.request(model, query, data);
+			this.render();
+		},	
+		deleteSubmit: function(evt){
+			console.log('View- Delete');
+			evt.preventDefault();
+			var id=evt.currentTarget.getAttribute('data-id'), model=this.collection.where({boss_id: id}), query={'zone': 'boss', 'act': 'delete'}, data={'id': id};
+			// Request Client //
+			model[0].destroy();
+			// Save History //
+			this.history.push({'model':model[0], 'query':query, 'data':data});		
 			// Request Server //			
 			//this.request(model, query, data);
 			this.render();
 		},
 		request: function(model, query, data){
 			console.log('View- Request');
-			console.dir(model);
-			this.model.query=query;
-			this.model.save(data);
+			model.query=query;
+			model.save(data);
 		},
 		save: function(){
 			console.log('View- Save');
 			for(var i in this.history){
-				console.dir(this.history[i]);
+				console.log(getQuery(this.history[i].data));
 				this.request(this.history[i].model, this.history[i].query, this.history[i].data);
 			}
 			this.initialize();
-		},	
-		deleteSubmit: function(evt){
-			console.log('View- Delete');
-			evt.preventDefault();
-			var id=evt.currentTarget.getAttribute('data-id'), model=this.collection.get(id), query={'act': 'delete'}, data={'id': id};
-			// Request Client //
-			model.destroy();
-			// Save History //
-			this.history.push({'model':model, 'query':query, 'data':data});		
-			// Request Server //			
-			//this.request(model, query, data);
-			this.render();
 		}
 	});
-	Student.Router=Backbone.Router.extend({
+	router=Backbone.Router.extend({
 		routes: {
-			'': 'default',
-			'act=:act/id=:id': 'default'
+			'': 'defaultRouter'
 		},
-		'default': function(act, id){
-			var collection=new Student.Collection();
-			var model=new Student.Model();
-			new Student.View.Read({collection: collection, model: model});
+		'defaultRouter': function(){
+			var bossCollection=new Boss.Collection();
+			var bossModel=new Boss.Model();
+			new Boss.View.Read({collection: bossCollection, model: bossModel});
 		}
 	})
-	var appRouter=new Student.Router();
+	var appRouter=new router();
 	Backbone.history.start();
 	})(jQuery);
 	</script> 

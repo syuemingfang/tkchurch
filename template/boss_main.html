@@ -1,0 +1,27 @@
+﻿<h3>管理員資料</h3>
+<ul class="button-group">
+	<li><a href="#" class="boss_mainView small button secondary"><i class="foundicon-star"></i> Main</a></li>
+	<li><a href="#" class="boss_createView small button secondary"><i class="foundicon-plus"></i> Create</a></li>
+    <li><a href="#" class="boss_save small button secondary"><i class="foundicon-inbox"></i> Save</a></li>
+</ul>
+<table width='100%'>
+<thead>
+<tr>
+<th width='10%'>ID</th><th width='30%'>Name</th><th width='30%'>Password</th><th width='30%'>Action</th>
+</tr>
+</thead>
+<tbody>
+<% _.each(models, function(model) { %>
+<tr>
+<td><%= model.boss_id %></td>
+<td><%= model.boss_name %></td>
+<td><%= model.boss_password %></td>
+<td>
+<a href='#' class='boss_readView button small' data-id="<%= model.boss_id %>"><i class="foundicon-page"></i></a>
+<a href='#' class='boss_updateView button small' data-id="<%= model.boss_id %>"><i class="foundicon-tools"></i></a>
+<a href='#' class='boss_deleteSubmit button small' data-id="<%= model.boss_id %>"><i class="foundicon-remove"></i></a>
+</td>
+</tr>
+<% }); %>
+</tbody>
+</table>

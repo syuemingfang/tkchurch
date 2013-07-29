@@ -2,12 +2,14 @@
 <html>
 <head>
 	<title>Hello World</title>
-	<meta name="viewport" content="width=device-width" /> 
-	<link rel="stylesheet" href="css/foundation.css" />
-	<link rel="stylesheet" href="css/general_foundicons.css">
-	<style>h3{font-family: 微軟正黑體;}</style>
+	<meta name='viewport' content='width=device-width' /> 
+	<link rel='stylesheet' href='css/foundation.css' />
+	<link rel='stylesheet' href='css/general_foundicons.css'>
+	<style>
+	h3{font-family: 微軟正黑體;}
+	</style>
 	<!--[if lt IE 8]>
-		<link rel="stylesheet" href="css/general_foundicons_ie7.css">
+		<link rel='stylesheet' href='css/general_foundicons_ie7.css'>
   	<![endif]-->
 </head>
 <body>
@@ -20,22 +22,22 @@
 	</div>
 	<div class='row'>
 		<div class='large-2 columns'>
-			<div class="docs section-container accordion" data-section="accordion" data-options="one_up: false">
-				<section class="section active">
-					<p class="title"><a href="#">內部設定</a></p>
-					<div class="content">
-						<ul class="side-nav">
-							<li><a class="active boss_mainView" href="#">管理員資料</a></li>
-							<li><a class="item_mainView" href="#">頁面管理</a></li>
+			<div class='docs section-container accordion' data-section='accordion' data-options='one_up: false'>
+				<section class='section active'>
+					<p class='title'><a href='#'>內部設定</a></p>
+					<div class='content'>
+						<ul class='side-nav'>
+							<li><a class='active' href='#boss'>管理員資料</a></li>
+							<li><a href='#item'>頁面管理</a></li>
 						</ul>
 					</div>
 				</section>
-				<section class="section">
-					<p class="title"><a href="#">Menu B</a></p>
-					<div class="content">
-						<ul class="side-nav">
-							<li><a class="active" href="#">Sub 1</a></li>
-							<li><a class="" href="#">Sub 2</a></li>
+				<section class='section'>
+					<p class='title'><a href='#'>Menu B</a></p>
+					<div class='content'>
+						<ul class='side-nav'>
+							<li><a class='active' href='#'>Sub 1</a></li>
+							<li><a class='' href='#'>Sub 2</a></li>
 						</ul>
 					</div>
 				</section>
@@ -86,16 +88,16 @@
 		return objectData;
 	};
 	// Boss //
-	var Boss={};
-	Boss.View={};
+	var Boss={}, CRUD=null;
 	Boss.Model=Backbone.Model.extend({
 		initialize: function(){
 			console.log('Model Initialize');
 		},
+		idAttribute: 'boss_id',
 		defaults: {
-			'boss_id': 'underfind',
-			'boss_name': 'underfind',
-			'boss_password': 'underfind'
+			'boss_id': 'undefined',
+			'boss_name': 'undefined',
+			'boss_password': 'undefined'
 		},
 		urlRoot: 'mysql.php',
 		url: function(){
@@ -113,17 +115,36 @@
 			return model.get();
 		}
 	});
-	Boss.View.Read=Backbone.View.extend({
+	var Item={};
+	Item.Model=Backbone.Model.extend({
+		initialize: function(){
+			console.log('Model Initialize');
+		},
+		idAttribute: 'item_id',
+		defaults: {
+			'item_id': 'undefined',
+			'itemType_id': 'undefined',
+			'item_name': 'undefined'
+		},
+		urlRoot: 'mysql.php',
+		url: function(){
+			var base=this.urlRoot || (this.collection && this.collection.url) || '/', query=getQuery(this.query)
+			if (this.isNew()) return base;
+			return base+'?'+query;
+		}
+	});
+	Item.Collection=Backbone.Collection.extend({
+		initialize: function(){
+			console.log('Collection Initialize');
+		},
+		model: Item.Model,
+		comparator: function(model){
+			return model.get();
+		}
+	});
+	CRUD=Backbone.View.extend({
 		el: $('#wrapper'),
 		container: $('#container'),
-		template: 'template/boss_main.html',
-		templateRead: 'template/boss_read.html',
-		templateUpdate: 'template/boss_update.html',
-		templateCreate: 'template/boss_create.html',
-		query: {
-			'zone': 'boss',
-			'act': 'read'
-		},
 		page: {
 			el: $('#page-wrapper'),			
 			container: $('#page-container'),
@@ -133,35 +154,59 @@
 		},
 		history: [],
 		events: {
-			"click .boss_save": "save",
-			"click .boss_mainView": "render",
+			'click .save': 'save',
+			'click .mainView': 'render',
 			// Page //
-			"click .boss_pageView": "render",
+			'click .pageView': 'render',
 			// Read //
-			"click .boss_readView": "readView",
+			'click .readView': 'readView',
 			// Create //
-			"click .boss_createView": "createView",
-			"click .boss_createSubmit": "createSubmit",
+			'click .createView': 'createView',
+			'click .createSubmit': 'createSubmit',
 			// Update //
-			"click .boss_updateView": "updateView",
-			"click .boss_updateSubmit": "updateSubmit",
-			"click .boss_deleteSubmit": "deleteSubmit"
+			'click .updateView': 'updateView',
+			'click .updateSubmit': 'updateSubmit',
+			'click .deleteSubmit': 'deleteSubmit'
 		},
 		initialize: function(collection, query){
 			console.log('View- Initialize');
-			var that=this, query=getQuery(this.query);
-			this.collection.url='mysql.php?'+query;
+			var that=this;
+			// Get Query //
+			for(var i in query) this[i]=query[i]
+			this.collection.url='mysql.php?zone='+this.zone+'&act=read';
 			that.collection.fetch({
 				success: function(collection, resp){
 					that.render();
 				}
 			});
 		},
+		checkField: function(data){
+			for(var i in data){
+				var obj=$('#'+i), check=null;
+				check=obj.attr('data-check');
+				if(!check) continue;
+				checkArr=check.split(' ');
+				for(var j in checkArr){
+					if(checkArr[j] == 'null'){
+						if(!obj.val()){
+							obj.addClass('error')
+							return false;
+						}
+						else{
+							if(obj.hasClass('error')) obj.removeClass('error')
+						}
+					}
+
+				}	
+			}
+			return true;
+		},
 		render: function(evt){
 			console.log('View- Render');
 			this.page.el.css('display','block');
 			this.page.current=evt?(evt.currentTarget.getAttribute('data-page')?evt.currentTarget.getAttribute('data-page'):1):1;
 			var that=this, pageStart=(that.page.current-1)*that.page.max, pageEnd=pageStart+that.page.max, models=[];
+			this.container.html('');
 			this.container.load(this.template, function(html){
 				that.container.html('');
 				for(var i=pageStart; i < pageEnd; i++){
@@ -171,15 +216,19 @@
 				console.dir(models);
 				that.container.html(_.template(html, {models: models}));
 			});
+			this.pageView();
+		},
+		pageView: function(){
 			// Page //
+			var that=this;
 			var pageCounter=Math.ceil(((this.collection).models.length)/this.page.max);
 			this.page.container.load(this.page.template, function(html){
 				that.page.container.html('');
 				for(var i=1; i <= pageCounter; i++){
 					that.page.container.html(that.page.container.html()+_.template(html, {page: i}));
 				}
-			});	
-			return false;		
+			});
+			return false;
 		},
 		createView: function(evt){
 			console.log('View- Create');
@@ -191,60 +240,77 @@
 		createSubmit: function(evt){
 			console.log('View- Create- Submit');
 			evt.preventDefault();
-			var model=this.model, query={'zone': 'boss', 'act': 'create'}, data=this.$el.find('form').serializeObject();
-			// Request Client //
-			this.collection.add(data);
-			// Save History //
-			this.history.push({'model':model, 'query':query, 'data':data});	
-			// Request Server //			
-			//this.request(model, query, data);
-			this.render();
+			var query={'zone': this.zone, 'act': 'create'}, data=this.$el.find('form').serializeObject(), model=this.model;
+			var check=this.checkField(data);
+			if(check){
+				if(typeof data[this.idAttribute] == 'undefined'){
+					var d=new Date();
+					data[this.idAttribute]='temp'+d.getTime();
+				}
+				// Request Client //
+				this.collection.add(data);
+				// Save History //
+				this.history.push({'model':model, 'query':query, 'data':data});	
+				this.render();
+			}
+			else{
+				return false;
+			}
 		},
 		readView: function(evt){
 			console.log('View- Read');
-			this.page.el.css('display','none');
+			this.page.el.css('display','none'); //Hide Page
 			evt.preventDefault();
-			var that=this, id=evt.currentTarget.getAttribute('data-id'), model=this.collection.where({boss_id: id});
+			var that=this, id=evt.currentTarget.getAttribute('data-id'), where={}, model=null;
+			// Get Model By ID //
+			where[this.idAttribute]=id;
+			model=this.collection.where(where)[0];
+			// Get Started //
 			this.container.load(this.templateRead, function(html){
 				that.container.html('');
-				that.container.html(_.template(html, model[0].toJSON())+that.container.html());
+				that.container.html(_.template(html, model.toJSON())+that.container.html());
 			});
 			return false;
 		},
 		updateView: function(evt){
 			console.log('View- Update');
-			this.page.el.css('display','none');
+			this.page.el.css('display', 'none'); //Hide Page
 			evt.preventDefault();
-			var that=this, id=evt.currentTarget.getAttribute('data-id'), model=this.collection.where({boss_id: id});
+			var that=this, id=evt.currentTarget.getAttribute('data-id'), where={}, model=null;
+			// Get Model By ID //
+			where[this.idAttribute]=id;
+			model=this.collection.where(where)[0];
+			// Get Started //
 			this.container.load(this.templateUpdate, function(html){
 				that.container.html('');
-				that.container.html(_.template(html, model[0].toJSON())+that.container.html());
+				that.container.html(_.template(html, model.toJSON())+that.container.html());
 			});
 			return false;
 		},
 		updateSubmit: function(evt){
 			console.log('View- Update- Submit');
 			evt.preventDefault();
-			var query={'zone': 'boss', 'act':'update'}, data=this.$el.find('form').serializeObject(), model=this.collection.where({boss_id: data.boss_id});
-			console.log(model);
+			var query={'zone': this.zone, 'act':'update'}, data=this.$el.find('form').serializeObject(), where={}, model=null;
+			// Get Model By ID //
+			where[this.idAttribute]=data[this.idAttribute];
+			model=this.collection.where(where)[0];
 			// Request Client //
-			model[0].set(data);
+			model.set(data);
 			// Save History //			
-			this.history.push({'model':model[0], 'query':query, 'data':data});	
-			// Request Server //			
-			//this.request(model, query, data);
+			this.history.push({model:model, 'query':query, 'data':data});	
 			this.render();
 		},	
 		deleteSubmit: function(evt){
 			console.log('View- Delete');
 			evt.preventDefault();
-			var id=evt.currentTarget.getAttribute('data-id'), model=this.collection.where({boss_id: id}), query={'zone': 'boss', 'act': 'delete'}, data={'id': id};
+			var query={'zone': this.zone, 'act': 'delete'}, id=evt.currentTarget.getAttribute('data-id'), where={}, model=null;
+			// Get ID //
+			where[this.idAttribute]=id;
+			model=this.collection.where(where)[0];
 			// Request Client //
-			model[0].destroy();
+			model.destroy();
 			// Save History //
-			this.history.push({'model':model[0], 'query':query, 'data':data});		
-			// Request Server //			
-			//this.request(model, query, data);
+			this.history.push({'model':model, 'query':query, 'data':where});		
 			this.render();
 		},
 		request: function(model, query, data){
@@ -263,19 +329,44 @@
 	});
 	router=Backbone.Router.extend({
 		routes: {
-			'': 'defaultRouter'
+			'': 'defaultRouter',
+			'boss': 'defaultRouter',
+			'item': 'itemRouter'
 		},
 		'defaultRouter': function(){
-			var bossCollection=new Boss.Collection();
-			var bossModel=new Boss.Model();
-			new Boss.View.Read({collection: bossCollection, model: bossModel});
+			console.log('Boss Router');
+			var c=new Boss.Collection();
+			var m=new Boss.Model();
+			var v=new CRUD({collection: c, model: m},
+			{
+				zone: 'boss', 
+				idAttribute: 'boss_id',
+				template: 'template/boss_main.html',
+				templateRead: 'template/boss_read.html',
+				templateUpdate: 'template/boss_update.html',
+				templateCreate: 'template/boss_create.html'
+			});
+		},
+		'itemRouter': function(){
+			console.log('Item Router');
+			var c=new Item.Collection();
+			var m=new Item.Model();
+			var v=new CRUD({collection: c, model: m},
+			{
+				zone: 'item', 
+				idAttribute: 'item_id',
+				template: 'template/item_main.html',
+				templateRead: 'template/item_read.html',
+				templateUpdate: 'template/item_update.html',
+				templateCreate: 'template/item_create.html'
+			});
 		}
 	})
 	var appRouter=new router();
 	Backbone.history.start();
 	})(jQuery);
 	</script> 
-	<script src="js/foundation.min.js"></script>
+	<script src='js/foundation.min.js'></script>
 	<script>
 		$(document).foundation();
 	</script>

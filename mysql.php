@@ -49,18 +49,18 @@ if(isset($_GET['act'])){
 	} else{
 		$conID=mysql_pconnect($mysqlHost, $mysqlUser, $mysqlPass)or die('Error: '.mysql_error().'<br />');
 		@mysql_select_db($mysqlDB, $conID);
-		if($_GET['zone'] == 'boss'){
+		if(isset($_GET['zone'])){
 			if($_GET['act'] == 'view'){
 				$result=mysql_query("Select * From boss", $conID)or die('Error: '.mysql_error().'<br />');
 				while(list($boss_id, $boss_name, $boss_password)=@mysql_fetch_row($result)){
 					echo $boss_name.'<br />';
 				}
 			} else if($_GET['act'] == 'read'){
-				if(isset($_GET['id'])){
-					$result=mysql_query("Select * From boss Where id=".$_GET['boss_id'], $conID)or die('Error: '.mysql_error().'<br />');			
+				if(isset($_GET[$_GET['zone'].'_id'])){
+					$result=mysql_query('Select * From '.$_GET['zone'].' Where '.$_GET['zone'].'_id='.$_GET[$_GET['zone'].'_id'], $conID)or die('Error: '.mysql_error().'<br />');			
 				}
 				else{
-					$result=mysql_query("Select * From boss", $conID)or die('Error: '.mysql_error().'<br />');
+					$result=mysql_query('Select * From '.$_GET['zone'], $conID)or die('Error: '.mysql_error().'<br />');
 				}
 				while($row=@mysql_fetch_assoc($result)){
 					$rows[]=$row;
@@ -69,7 +69,7 @@ if(isset($_GET['act'])){
 				echo json_encode($rows);
 			} else if($_GET['act'] == 'create'){
 				$data=json_decode(file_get_contents('php://input'));
-				$query="Select Max(boss_id) as newId From boss";
+				$query='Select Max('$_GET['zone']+'_id) as newId From boss';
 				$result=@mysql_query($query, $conID)or die('Error: '.$query.'<br />');
 				$rows=@mysql_fetch_row($result);
 				$newId=$rows[0]+1;

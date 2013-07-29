@@ -69,7 +69,7 @@ if(isset($_GET['act'])){
 				echo json_encode($rows);
 			} else if($_GET['act'] == 'create'){
 				$data=json_decode(file_get_contents('php://input'));
-				$query='Select Max('$_GET['zone']+'_id) as newId From boss';
+				$query='Select Max('.$_GET['zone'].'_id) as newId From boss';
 				$result=@mysql_query($query, $conID)or die('Error: '.$query.'<br />');
 				$rows=@mysql_fetch_row($result);
 				$newId=$rows[0]+1;

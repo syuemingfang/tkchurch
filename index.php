@@ -1,4 +1,17 @@
-﻿<!DOCTYPE HTML>
+﻿<?php
+$dbname='church';
+$conID=mysql_pconnect('localhost', 'root', '');
+// Get All Table //
+$sql='Show Tables From '.$dbname;
+$result=@mysql_query($sql, $conID);
+$i=0;
+while($row=mysql_fetch_row($result)){
+	$table[$i]=$row[0];
+	$i++;
+}
+@mysql_free_result($result);
+?>
+<!DOCTYPE HTML>
 <html>
 <head>
 	<title>Hello World</title>
@@ -16,7 +29,7 @@
 <div id='wrapper'>
 	<div class='row'>
 		<div class='large-12 columns'>
-			<h1>Backoffice</h1>
+			<h1>Datebase</h1>
 			<hr />
 		</div>
 	</div>
@@ -24,11 +37,12 @@
 		<div class='large-2 columns'>
 			<div class='docs section-container accordion' data-section='accordion' data-options='one_up: false'>
 				<section class='section active'>
-					<p class='title'><a href='#'>Datebase</a></p>
+					<p class='title'><a href='#'>List</a></p>
 					<div class='content'>
 						<ul class='side-nav'>
-							<li><a class='active' href='#boss'>Boss</a></li>
-							<li><a href='#item'>Item</a></li>
+<?php for($i=0; $i < count($table); $i++){ ?>	
+			<li><a href='#<?php echo $table[$i] ?>'><?php echo $table[$i] ?></a></li>
+<?php } ?>
 						</ul>
 					</div>
 				</section>
@@ -87,18 +101,16 @@
 		});
 		return objectData;
 	};
-	// Boss //
-	var Boss={}, CRUD=null;
-	Boss.Model=Backbone.Model.extend({
+<?php for($i=0; $i < count($table); $i++){ ?>	
+	var <?php echo $table[$i] ?>={};
+	<?php echo $table[$i] ?>.Model=Backbone.Model.extend({
 		initialize: function(){
 			console.log('Model Initialize');
 		},
-		idAttribute: 'boss_id',
 		defaults: {
-			'boss_id': 'undefined',
-			'boss_name': 'undefined',
-			'boss_password': 'undefined'
+
 		},
+		idAttribute: '<?php echo $table[$i] ?>_id',
 		urlRoot: 'mysql.php',
 		url: function(){
 			var base=this.urlRoot || (this.collection && this.collection.url) || '/', query=getQuery(this.query)
@@ -106,42 +118,17 @@
 			return base+'?'+query;
 		}
 	});
-	Boss.Collection=Backbone.Collection.extend({
+	<?php echo $table[$i] ?>.Collection=Backbone.Collection.extend({
 		initialize: function(){
 			console.log('Collection Initialize');
 		},
-		model: Boss.Model,
+		model: <?php echo $table[$i] ?>.Model,
 		comparator: function(model){
 			return model.get();
 		}
 	});
-	var Item={};
-	Item.Model=Backbone.Model.extend({
-		initialize: function(){
-			console.log('Model Initialize');
-		},
-		idAttribute: 'item_id',
-		defaults: {
-			'item_id': 'undefined',
-			'itemType_id': 'undefined',
-			'item_name': 'undefined'
-		},
-		urlRoot: 'mysql.php',
-		url: function(){
-			var base=this.urlRoot || (this.collection && this.collection.url) || '/', query=getQuery(this.query)
-			if (this.isNew()) return base;
-			return base+'?'+query;
-		}
-	});
-	Item.Collection=Backbone.Collection.extend({
-		initialize: function(){
-			console.log('Collection Initialize');
-		},
-		model: Item.Model,
-		comparator: function(model){
-			return model.get();
-		}
-	});
+<?php } ?>
+	var CRUD=null;
 	CRUD=Backbone.View.extend({
 		el: $('#wrapper'),
 		container: $('#container'),
@@ -174,12 +161,27 @@
 			// Get Query //
 			for(var i in query) this[i]=query[i]
 			this.collection.url='mysql.php?table='+this.table+'&act=read';
-			console.log(this.collection)
 			that.collection.fetch({
 				success: function(collection, resp){
 					that.render();
 				}
 			});
+		},
+		render: function(evt){
+			console.log('View- Render');
+			this.page.el.css('display','block');
+			this.page.current=evt?(evt.currentTarget.getAttribute('data-page')?evt.currentTarget.getAttribute('data-page'):1):1;
+			var that=this, pageStart=(that.page.current-1)*that.page.max, pageEnd=pageStart+that.page.max, models=[];
+			this.container.html('');
+			this.container.load(this.template, function(html){
+				that.container.html('');
+				for(var i=pageStart; i < pageEnd; i++){
+					if(!(that.collection).models[i]) break;
+					models.push((that.collection).models[i].toJSON());
+				}
+				that.container.html(_.template(html, {models: models}));
+			});
+			this.pageView();
 		},
 		checkField: function(data){
 			for(var i in data){
@@ -201,23 +203,6 @@
 				}	
 			}
 			return true;
-		},
-		render: function(evt){
-			console.log('View- Render');
-			this.page.el.css('display','block');
-			this.page.current=evt?(evt.currentTarget.getAttribute('data-page')?evt.currentTarget.getAttribute('data-page'):1):1;
-			var that=this, pageStart=(that.page.current-1)*that.page.max, pageEnd=pageStart+that.page.max, models=[];
-			this.container.html('');
-			this.container.load(this.template, function(html){
-				that.container.html('');
-				for(var i=pageStart; i < pageEnd; i++){
-					if(!(that.collection).models[i]) break;
-					models.push((that.collection).models[i].toJSON());
-				}
-				console.dir(models);
-				that.container.html(_.template(html, {models: models}));
-			});
-			this.pageView();
 		},
 		pageView: function(){
 			// Page //
@@ -333,14 +318,29 @@
 	});
 	router=Backbone.Router.extend({
 		routes: {
-			'': 'defaultRouter',
-			'boss': 'defaultRouter',
-			'item': 'itemRouter'
+<?php for($i=0; $i < count($table); $i++){ ?>	
+			'<?php echo $table[$i] ?>':'<?php echo $table[$i] ?>Router',
+<?php } ?>
+			'':'defaultRouter'
 		},
+<?php for($i=0; $i < count($table); $i++){ ?>
+		'<?php echo $table[$i] ?>Router': function(){
+			var c=new <?php echo $table[$i] ?>.Collection();
+			var m=new <?php echo $table[$i] ?>.Model();
+			var v=new CRUD({collection: c, model: m},
+			{
+				table: '<?php echo $table[$i] ?>', 
+				idAttribute: '<?php echo $table[$i] ?>_id',
+				template: 'template/template.php?act=main&table=<?php echo $table[$i] ?>',
+				templateRead: 'template/template.php?act=read&table=<?php echo $table[$i] ?>',
+				templateUpdate: 'template/template.php?act=update&table=<?php echo $table[$i] ?>',
+				templateCreate: 'template/template.php?act=create&table=<?php echo $table[$i] ?>'
+			});
+		},
+<?php } ?>
 		'defaultRouter': function(){
-			console.log('Boss Router');
-			var c=new Boss.Collection();
-			var m=new Boss.Model();
+			var c=new boss.Collection();
+			var m=new boss.Model();
 			var v=new CRUD({collection: c, model: m},
 			{
 				table: 'boss', 
@@ -349,20 +349,6 @@
 				templateRead: 'template/template.php?act=read&table=boss',
 				templateUpdate: 'template/template.php?act=update&table=boss',
 				templateCreate: 'template/template.php?act=create&table=boss'
-			});
-		},
-		'itemRouter': function(){
-			console.log('Item Router');
-			var c=new Item.Collection();
-			var m=new Item.Model();
-			var v=new CRUD({collection: c, model: m},
-			{
-				table: 'item', 
-				idAttribute: 'item_id',
-				template: 'template/template.php?act=main&table=item',
-				templateRead: 'template/template.php?act=read&table=item',
-				templateUpdate: 'template/template.php?act=update&table=item',
-				templateCreate: 'template/template.php?act=create&table=item'
 			});
 		}
 	})

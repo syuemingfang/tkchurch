@@ -225,7 +225,7 @@
 		updateSubmit: function(evt){
 			console.log('View- Update- Submit');
 			evt.preventDefault();
-			var query={'zone': 'boss', 'act':'update'}, data=this.$el.find('form').serializeObject(), model=this.collection.where({boss_id: data.boss_id});
+			var query={'zone': 'boss', 'act':'update'}, data=this.$el.find('form').serializeObject(), model=this.collection.where({boss_id: data.id});
 			console.log(model);
 			// Request Client //
 			model[0].set(data);
@@ -255,7 +255,6 @@
 		save: function(){
 			console.log('View- Save');
 			for(var i in this.history){
-				console.log(getQuery(this.history[i].data));
 				this.request(this.history[i].model, this.history[i].query, this.history[i].data);
 			}
 			this.initialize();
